@@ -1,0 +1,128 @@
+<mxfile host="app.diagrams.net" modified="2024-03-07T17:44:51.044Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0" etag="8Z5UP132gSKICvn4RgiH" version="24.0.2" type="device">
+  <diagram name="Page-1" id="4g19qVDiBoLyYZehXLGF">
+    <mxGraphModel dx="1434" dy="759" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-1" value="Sestra" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="100" y="80" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-2" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Use-case diagram&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="15" y="20" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-3" value="Zobraziť detaily pacienta" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="40" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-5" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="120" as="sourcePoint" />
+            <mxPoint x="220" y="80" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-6" value="Zobraziť detaily dávkovania" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="110" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-7" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="135" as="sourcePoint" />
+            <mxPoint x="220" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-10" value="Vytvoriť vyšetrenie" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="190" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-11" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="300" as="sourcePoint" />
+            <mxPoint x="210" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-15" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="119.71000000000001" y="280" as="sourcePoint" />
+            <mxPoint x="119.71000000000001" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-17" value="Lekár" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="100" y="290" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-18" value="Zapísať výsledky vyšetrenia" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="260" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-19" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-18" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="325" as="sourcePoint" />
+            <mxPoint x="240" y="275" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-20" value="Zobraziť všeobecné informácie&lt;br&gt; o liekoch" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="320" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-21" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-20" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="350" as="sourcePoint" />
+            <mxPoint x="210" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-22" value="&lt;div&gt;Vytvoriť dávkovanie&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="380" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-23" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-22" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="370" as="sourcePoint" />
+            <mxPoint x="210" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-25" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="80" y="600" as="sourcePoint" />
+            <mxPoint x="80" y="120" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="40" y="600" />
+              <mxPoint x="40" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-26" value="&lt;div&gt;Administratívna&lt;/div&gt;&lt;div&gt;sestra&lt;br&gt;&lt;/div&gt;" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="100" y="560" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-27" value="&lt;div&gt;Vytvoriť pracovníkov&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="520" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-28" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-27" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="570" as="sourcePoint" />
+            <mxPoint x="210" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-29" value="&lt;div&gt;Vytvoriť hospitalizáciu&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="585" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-30" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-29" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="595" as="sourcePoint" />
+            <mxPoint x="205" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-31" value="Zmeniť oddelenia" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="650" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4DDOb-JXOODNO2P9ZSZw-32" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="4DDOb-JXOODNO2P9ZSZw-31" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="620" as="sourcePoint" />
+            <mxPoint x="205" y="650" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="H-c-shskwveekxmaXyzE-1" value="Zmeniť dávkovanie" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="450" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="H-c-shskwveekxmaXyzE-2" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="H-c-shskwveekxmaXyzE-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="410" as="sourcePoint" />
+            <mxPoint x="210" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
