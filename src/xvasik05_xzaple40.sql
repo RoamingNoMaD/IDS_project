@@ -54,7 +54,14 @@ DROP SEQUENCE lek_davka_seq;
 CREATE SEQUENCE lek_davka_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
 
 CREATE TABLE personal (
-    rodne_cislo NUMBER PRIMARY KEY CHECK ( REGEXP_LIKE(rodne_cislo, '$[0-9]{2}(?:[0257][1-9]|[1368][0-2])(?:0[1-9]|[12][0-9]|3[01])/?[0-9]{3,4}^') ),
+    rodne_cislo VARCHAR2(11) PRIMARY KEY CHECK (
+        /* TODO: pridat dalsie kontroly podla zadania:
+            https://www.cssz.cz/web/cz/standardni-kontrola-rodneho-cisla-a-evidencniho-cisla-pojistence
+           Discord help:
+            https://discord.com/channels/461541385204400138/591341448386052117/960133764669927474
+        */
+        REGEXP_LIKE(rodne_cislo, '[0-9]{2}[0156][0-9][0-3][0-9]/[0-9]{3,4}')
+    ),
     jmeno NVARCHAR2(100) NOT NULL,
     titul NVARCHAR2(50) NOT NULL,
     datum_nastupu DATE NOT NULL,
@@ -62,17 +69,15 @@ CREATE TABLE personal (
 );
 
 CREATE TABLE lekare (
-    specializacia NVARCHAR2(40) NOT NULL,
-    rodne_cislo NUMBER NOT NULL,
-
-    CONSTRAINT rodne_cislo_lekare FOREIGN KEY (rodne_cislo) REFERENCES personal(rodne_cislo) ON DELETE CASCADE
+    rodne_cislo VARCHAR2(11) PRIMARY KEY REFERENCES personal(rodne_cislo) ON DELETE CASCADE,
+    specializacia NVARCHAR2(40) NOT NULL
 );
 
 CREATE TABLE oddeleni (
     id NUMBER PRIMARY KEY,
     nazev NVARCHAR2(40) NOT NULL,
     kapacita NUMBER NOT NULL,
-    typ VARCHAR(20) NOT NULL CHECK ( REGEXP_LIKE(typ, '(urgentni)|(luzkove)|(transfuzni)|(infekcni)') )
+    typ NVARCHAR2(20) NOT NULL CHECK ( REGEXP_LIKE(typ, '(urgentní)|(lůžkové)|(transfuzní)|(infekcní)') )
 );
 
 CREATE TABLE pacienty (
@@ -89,7 +94,7 @@ CREATE TABLE leky (
     id NUMBER PRIMARY KEY,
     nazev NVARCHAR2(40) NOT NULL,
     ucinna_latka NVARCHAR2(50) NOT NULL,
-    sila_leku VARCHAR2(20) NOT NULL, -- TODO: ake data budu tu?
+    sila_leku VARCHAR2(20) NOT NULL,
     kontradikce NVARCHAR2(100) NOT NULL
 );
 
@@ -98,11 +103,11 @@ CREATE TABLE hospitalizace (
     cas_hospitalizaci TIMESTAMP WITH LOCAL TIME ZONE NOT NULL,
     popis NVARCHAR2(200),
     pacient NUMBER NOT NULL,
-    lekar NUMBER NOT NULL,
+    lekar VARCHAR2(11) NOT NULL,
     oddeleni NUMBER NOT NULL,
 
     CONSTRAINT nemocny FOREIGN KEY (pacient) REFERENCES pacienty(id) ON DELETE CASCADE,
-    CONSTRAINT osetrujici_lekar FOREIGN KEY (lekar) REFERENCES personal(rodne_cislo) ON DELETE CASCADE,
+    CONSTRAINT osetrujici_lekar FOREIGN KEY (lekar) REFERENCES lekare(rodne_cislo) ON DELETE CASCADE,
     CONSTRAINT na_oddeleni FOREIGN KEY (oddeleni) REFERENCES oddeleni(id) ON DELETE CASCADE
 );
 
@@ -124,18 +129,18 @@ CREATE TABLE vysetreni (
     vysledek NVARCHAR2(200),
     oddeleni NUMBER NOT NULL,
     hospitalicace NUMBER NOT NULL,
-    lekar NUMBER NOT NULL,
+    lekar VARCHAR2(11) NOT NULL,
 
     CONSTRAINT prebiha_na FOREIGN KEY (oddeleni) REFERENCES oddeleni(id) ON DELETE CASCADE,
     CONSTRAINT prubeh_v_hospitalizaci FOREIGN KEY (hospitalicace) REFERENCES hospitalizace(id) ON DELETE CASCADE,
-    CONSTRAINT prevedl FOREIGN KEY (lekar) REFERENCES personal(rodne_cislo) ON DELETE CASCADE
+    CONSTRAINT prevedl FOREIGN KEY (lekar) REFERENCES lekare(rodne_cislo) ON DELETE CASCADE
 );
 
 CREATE TABLE personal_oddeleni (
     id NUMBER PRIMARY KEY,
     telefon VARCHAR2(13) NOT NULL,
     uvazek VARCHAR2(13) NOT NULL, -- TODO: ake data budu tu?
-    rodne_cislo NUMBER NOT NULL,
+    rodne_cislo VARCHAR2(11) NOT NULL,
     id_oddeleni NUMBER NOT NULL,
 
     CONSTRAINT uvazek_k_oddeleni FOREIGN KEY (id_oddeleni) REFERENCES oddeleni(id) ON DELETE CASCADE,
@@ -144,16 +149,16 @@ CREATE TABLE personal_oddeleni (
 
 CREATE TABLE lekar_leky (
     id NUMBER PRIMARY KEY,
-    lekar NUMBER NOT NULL,
+    lekar VARCHAR2(11) NOT NULL,
     lek NUMBER NOT NULL,
 
-    CONSTRAINT predepisuje FOREIGN KEY (lekar) REFERENCES personal(rodne_cislo) ON DELETE CASCADE,
+    CONSTRAINT predepisuje FOREIGN KEY (lekar) REFERENCES lekare(rodne_cislo) ON DELETE CASCADE,
     CONSTRAINT je_predepsanej FOREIGN KEY (lek) REFERENCES leky(id) ON DELETE CASCADE
 );
 
 CREATE TABLE sestra_davka (
     id NUMBER PRIMARY KEY,
-    sestra NUMBER NOT NULL,
+    sestra VARCHAR2(11) NOT NULL,
     davka NUMBER NOT NULL,
 
     CONSTRAINT podala FOREIGN KEY (sestra) REFERENCES personal(rodne_cislo) ON DELETE CASCADE,
@@ -168,3 +173,62 @@ CREATE TABLE lek_davka (
     CONSTRAINT je_soucasti FOREIGN KEY (lek) REFERENCES leky(id) ON DELETE CASCADE,
     CONSTRAINT patricna_davka FOREIGN KEY (davka) REFERENCES davky(id) ON DELETE CASCADE
 );
+
+INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
+VALUES ('000101/0001', 'Jan', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
+VALUES ('000102/0002', 'Jana', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
+VALUES ('000103/0003', 'Janko', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
+VALUES ('000104/0004', 'Janka', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+
+INSERT INTO lekare (rodne_cislo, specializacia) VALUES ('000101/0001', 'Chirurg');
+INSERT INTO lekare (rodne_cislo, specializacia) VALUES ('000102/0002', 'Všeobecný');
+
+-- TODO: spravit fix tabulku na typ oddeleni?
+INSERT INTO oddeleni (id, nazev, kapacita, typ) VALUES (1, 'Chirurgia', 20, 'urgentní');
+INSERT INTO oddeleni (id, nazev, kapacita, typ) VALUES (2, 'Všeobecné', 20, 'lůžkové');
+
+INSERT INTO pacienty (id, jmeno, titul, kontakt, datum_narozeni, pojistovna, zdravotni_karta)
+VALUES (1, 'Janko', 'Ing.', '123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 123456789, 123456789);
+INSERT INTO pacienty (id, jmeno, titul, kontakt, datum_narozeni, pojistovna, zdravotni_karta)
+VALUES (2, 'Janka', 'Ing.', '123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 123456789, 123456789);
+
+INSERT INTO leky (id, nazev, ucinna_latka, sila_leku, kontradikce)
+VALUES (1, 'Aspirin', 'Acetylsalicylová kyselina', '100mg', 'Nemocní s žaludečními vředy');
+INSERT INTO leky (id, nazev, ucinna_latka, sila_leku, kontradikce)
+VALUES (2, 'Paralen', 'Paracetamol', '500mg', 'Nemocní s poškozenou jaterní funkcí');
+
+INSERT INTO hospitalizace (id, cas_hospitalizaci, popis, pacient, lekar, oddeleni)
+VALUES (1, TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', 1, '000101/0001', 1);
+INSERT INTO hospitalizace (id, cas_hospitalizaci, popis, pacient, lekar, oddeleni)
+VALUES (2, TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', 2, '000102/0002', 2);
+
+INSERT INTO davky (id, cas_podani, mnozstvi, hospitalicace, pacienty)
+VALUES (1, TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 1, 1);
+INSERT INTO davky (id, cas_podani, mnozstvi, hospitalicace, pacienty)
+VALUES (2, TO_TIMESTAMP('2000-01-01 08:05:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 2, 2);
+INSERT INTO davky (id, cas_podani, mnozstvi, hospitalicace, pacienty)
+VALUES (3, TO_TIMESTAMP('2000-01-02 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 1, 1);
+
+INSERT INTO vysetreni (id, cas_vysetreni, popis, vysledek, oddeleni, hospitalicace, lekar)
+VALUES (1, TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 'Popis', 'Výsledek', 1, 1, '000101/0001');
+INSERT INTO vysetreni (id, cas_vysetreni, popis, vysledek, oddeleni, hospitalicace, lekar)
+VALUES (2, TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 'Popis', 'Výsledek', 2, 2, '000102/0002');
+
+INSERT INTO personal_oddeleni (id, telefon, uvazek, rodne_cislo, id_oddeleni)
+VALUES (1, '123456789', '40', '000101/0001', 1);
+INSERT INTO personal_oddeleni (id, telefon, uvazek, rodne_cislo, id_oddeleni)
+VALUES (2, '123456789', '40', '000102/0002', 2);
+
+INSERT INTO lekar_leky (id, lekar, lek) VALUES (1, '000101/0001', 1);
+INSERT INTO lekar_leky (id, lekar, lek) VALUES (2, '000102/0002', 2);
+
+INSERT INTO sestra_davka (id, sestra, davka) VALUES (1, '000103/0003', 1);
+INSERT INTO sestra_davka (id, sestra, davka) VALUES (2, '000104/0004', 2);
+INSERT INTO sestra_davka (id, sestra, davka) VALUES (3, '000103/0003', 3);
+
+INSERT INTO lek_davka (id, lek, davka) VALUES (1, 1, 1);
+INSERT INTO lek_davka (id, lek, davka) VALUES (2, 2, 2);
+INSERT INTO lek_davka (id, lek, davka) VALUES (3, 1, 3);
