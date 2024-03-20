@@ -55,14 +55,14 @@ CREATE SEQUENCE lek_davka_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
 
 CREATE TABLE personal (
     rodne_cislo NUMBER PRIMARY KEY CHECK ( REGEXP_LIKE(rodne_cislo, '$[0-9]{2}(?:[0257][1-9]|[1368][0-2])(?:0[1-9]|[12][0-9]|3[01])/?[0-9]{3,4}^') ),
-    jmeno VARCHAR2(100) NOT NULL,
-    titul VARCHAR2(50) NOT NULL,
+    jmeno NVARCHAR2(100) NOT NULL,
+    titul NVARCHAR2(50) NOT NULL,
     datum_nastupu DATE NOT NULL,
     kontakt VARCHAR2(13) NOT NULL
 );
 
 CREATE TABLE lekare (
-    specializacia VARCHAR2(40) NOT NULL,
+    specializacia NVARCHAR2(40) NOT NULL,
     rodne_cislo NUMBER NOT NULL,
 
     CONSTRAINT rodne_cislo_lekare FOREIGN KEY (rodne_cislo) REFERENCES personal(rodne_cislo) ON DELETE CASCADE
@@ -70,15 +70,15 @@ CREATE TABLE lekare (
 
 CREATE TABLE oddeleni (
     id NUMBER PRIMARY KEY,
-    nazev VARCHAR2(40) NOT NULL,
+    nazev NVARCHAR2(40) NOT NULL,
     kapacita NUMBER NOT NULL,
     typ VARCHAR(20) NOT NULL CHECK ( REGEXP_LIKE(typ, '(urgentni)|(luzkove)|(transfuzni)|(infekcni)') )
 );
 
 CREATE TABLE pacienty (
     id NUMBER PRIMARY KEY, -- TODO: rodne cislo?
-    jmeno VARCHAR2(100) NOT NULL,
-    titul VARCHAR2(50) NOT NULL,
+    jmeno NVARCHAR2(100) NOT NULL,
+    titul NVARCHAR2(50) NOT NULL,
     kontakt VARCHAR2(13) NOT NULL,
     datum_narozeni DATE NOT NULL,
     pojistovna NUMBER NOT NULL, -- TODO: pridajme check na poistence?
@@ -87,16 +87,16 @@ CREATE TABLE pacienty (
 
 CREATE TABLE leky (
     id NUMBER PRIMARY KEY,
-    nazev VARCHAR2(40) NOT NULL,
-    ucinna_latka VARCHAR2(50) NOT NULL,
-    sila_leku VARCHAR2(20) NOT NULL,
-    kontradikce VARCHAR2(100) NOT NULL
+    nazev NVARCHAR2(40) NOT NULL,
+    ucinna_latka NVARCHAR2(50) NOT NULL,
+    sila_leku VARCHAR2(20) NOT NULL, -- TODO: ake data budu tu?
+    kontradikce NVARCHAR2(100) NOT NULL
 );
 
 CREATE TABLE hospitalizace (
     id NUMBER PRIMARY KEY,
     cas_hospitalizaci TIMESTAMP WITH LOCAL TIME ZONE NOT NULL,
-    popis VARCHAR2(200),
+    popis NVARCHAR2(200),
     pacient NUMBER NOT NULL,
     lekar NUMBER NOT NULL,
     oddeleni NUMBER NOT NULL,
@@ -120,8 +120,8 @@ CREATE TABLE davky (
 CREATE TABLE vysetreni (
     id NUMBER PRIMARY KEY,
     cas_vysetreni TIMESTAMP WITH LOCAL TIME ZONE NOT NULL,
-    popis VARCHAR2(200) NOT NULL,
-    vysledek VARCHAR2(200),
+    popis NVARCHAR2(200) NOT NULL,
+    vysledek NVARCHAR2(200),
     oddeleni NUMBER NOT NULL,
     hospitalicace NUMBER NOT NULL,
     lekar NUMBER NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE vysetreni (
 CREATE TABLE personal_oddeleni (
     id NUMBER PRIMARY KEY,
     telefon VARCHAR2(13) NOT NULL,
-    uvazek VARCHAR2(13) NOT NULL,
+    uvazek VARCHAR2(13) NOT NULL, -- TODO: ake data budu tu?
     rodne_cislo NUMBER NOT NULL,
     id_oddeleni NUMBER NOT NULL,
 
