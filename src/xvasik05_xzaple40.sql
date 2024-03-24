@@ -1,6 +1,6 @@
 /*
     IDS projekt - Nemocnica (zadanie c. 30 z IUS)
-    Autori: Janos Laszlo Vasik (xvasik05), Václav Zapletal (xzaple40)
+    Autori: János László Vasík (xvasik05), Václav Zapletal (xzaple40)
  */
 
 DROP TABLE personal CASCADE CONSTRAINTS;
@@ -17,32 +17,7 @@ DROP TABLE lekar_leky;
 DROP TABLE sestra_davka;
 DROP TABLE lek_davka;
 
--- DROP SEQUENCE oddeleni_seq;
--- CREATE SEQUENCE oddeleni_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE leky_seq;
--- CREATE SEQUENCE leky_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE hospitalizace_seq;
--- CREATE SEQUENCE hospitalizace_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE davky_seq;
--- CREATE SEQUENCE davky_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE vysetreni_seq;
--- CREATE SEQUENCE vysetreni_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE personal_oddeleni_seq;
--- CREATE SEQUENCE personal_oddeleni_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE lekar_leky_seq;
--- CREATE SEQUENCE lekar_leky_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE sestra_davka_seq;
--- CREATE SEQUENCE sestra_davka_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
-
--- DROP SEQUENCE lek_davka_seq;
--- CREATE SEQUENCE lek_davka_seq START WITH 1 INCREMENT BY 1 NOCYCLE;
+PURGE RECYCLEBIN;
 
 CREATE TABLE personal (
     rodne_cislo VARCHAR2(11) PRIMARY KEY CHECK ( REGEXP_LIKE(rodne_cislo, '[0-9]{2}[0156][0-9][0-3][0-9]/[0-9]{3,4}') ),
