@@ -3,6 +3,7 @@
     Autori: János László Vasík (xvasik05), Václav Zapletal (xzaple40)
  */
 
+-- DROP tabulek
 DROP TABLE personal CASCADE CONSTRAINTS;
 DROP TABLE lekare CASCADE CONSTRAINTS;
 DROP TABLE oddeleni CASCADE CONSTRAINTS;
@@ -18,7 +19,9 @@ DROP TABLE sestra_davka;
 DROP TABLE lek_davka;
 
 PURGE RECYCLEBIN;
+-----------------------------------------
 
+-- Vytvareni tabulek
 CREATE TABLE personal (
     rodne_cislo VARCHAR2(11) PRIMARY KEY CHECK ( REGEXP_LIKE(rodne_cislo, '[0-9]{2}[0156][0-9][0-3][0-9]/[0-9]{3,4}') ),
     jmeno NVARCHAR2(100) NOT NULL,
@@ -133,15 +136,17 @@ CREATE TABLE lek_davka (
     CONSTRAINT je_soucasti FOREIGN KEY (lek) REFERENCES leky(id) ON DELETE CASCADE,
     CONSTRAINT patricna_davka FOREIGN KEY (davka) REFERENCES davky(id) ON DELETE CASCADE
 );
+-----------------------------------------
 
+-- Vlozeni dat
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
-VALUES ('000101/0001', 'Jan', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+VALUES ('000101/0001', 'Jan', 'MUDr.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
-VALUES ('000102/0002', 'Jana', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+VALUES ('000102/0002', 'Jana', 'MUDr.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
-VALUES ('000103/0003', 'Janko', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+VALUES ('000103/0003', 'Janko', 'DiS.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
-VALUES ('000104/0004', 'Janka', 'Ing.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
+VALUES ('000104/0004', 'Janka', 'DiS.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
 
 INSERT INTO lekare (rodne_cislo, specializacia) VALUES ('000101/0001', 'Chirurg');
 INSERT INTO lekare (rodne_cislo, specializacia) VALUES ('000102/0002', 'Všeobecný');
@@ -191,3 +196,30 @@ INSERT INTO sestra_davka (sestra, davka) VALUES ('000103/0003', 3);
 INSERT INTO lek_davka (lek, davka) VALUES (1, 1);
 INSERT INTO lek_davka (lek, davka) VALUES (2, 2);
 INSERT INTO lek_davka (lek, davka) VALUES (1, 3);
+-----------------------------------------
+
+-- SELECTy TODO: delete this -> musí být v komentáři popsáno srozumitelně, jaká data hledá daný dotaz (jaká je jeho funkce v aplikaci)
+-- TODO: 2 dotazy využívající JOIN dvou tabulek
+
+-- Vsichni pacienti, kteri byli hospitalizovani na oddeleni chirurgie
+SELECT p.jmeno, p.datum_narozeni, p.pojistovna, p.zdravotni_karta
+FROM pacienty p
+JOIN hospitalizace h ON p.rodne_cislo = h.pacient
+JOIN oddeleni o ON h.oddeleni = o.id
+WHERE o.nazev = 'Chirurgia';
+
+-- TODO: 2 dotazy s klauzulí GROUP BY a agregační funkcí
+
+-- Vsichni pacienti, kterim byl podan lek Aspirin
+SELECT p.jmeno, p.datum_narozeni, p.pojistovna, p.zdravotni_karta
+FROM pacienty p
+JOIN davky d ON p.rodne_cislo = d.pacienty
+WHERE EXISTS(SELECT * FROM lek_davka ld JOIN leky l ON ld.lek = l.id WHERE l.nazev = 'Aspirin' AND ld.davka = d.id);
+
+-- Vsetke lekare ktore sa venovali pacientovi Janko
+SELECT p.titul, p.jmeno, l.specializacia
+FROM lekare l
+JOIN personal p ON l.rodne_cislo = p.rodne_cislo
+WHERE l.rodne_cislo
+IN (SELECT h.lekar FROM hospitalizace h JOIN pacienty p ON h.pacient = p.rodne_cislo WHERE p.jmeno = 'Janko');
+-----------------------------------------
