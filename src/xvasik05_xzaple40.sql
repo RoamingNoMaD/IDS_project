@@ -198,9 +198,6 @@ INSERT INTO lek_davka (lek, davka) VALUES (2, 2);
 INSERT INTO lek_davka (lek, davka) VALUES (1, 3);
 -----------------------------------------
 
--- SELECTy TODO: delete this -> musí být v komentáři popsáno srozumitelně, jaká data hledá daný dotaz (jaká je jeho funkce v aplikaci)
--- TODO: 2 dotazy využívající JOIN dvou tabulek
-
 -- Seznam lékařů a jejich specializace
 SELECT p.jmeno AS lekar_jmeno, l.specializacia AS lekar_specializace
 FROM lekare l
@@ -211,16 +208,13 @@ SELECT p.jmeno AS pacient_jmeno, h.cas_hospitalizaci, h.popis
 FROM pacienty p
 JOIN hospitalizace h ON p.rodne_cislo = h.pacient;
 
-
-
--- Vsichni pacienti, kteri byli hospitalizovani na oddeleni chirurgie
+-- Všichni pacienti, kteří byli hospitalizováni na oddělení chirurgie.
 SELECT p.jmeno, p.datum_narozeni, p.pojistovna, p.zdravotni_karta
 FROM pacienty p
 JOIN hospitalizace h ON p.rodne_cislo = h.pacient
 JOIN oddeleni o ON h.oddeleni = o.id
 WHERE o.nazev = 'Chirurgia';
 
--- TODO: 2 dotazy s klauzulí GROUP BY a agregační funkcí
 
 -- Počet hospitalizací na každém oddělení
 SELECT o.nazev AS oddeleni, COUNT(h.id) AS pocet_hospitalizaci
@@ -229,20 +223,19 @@ JOIN hospitalizace h ON o.id = h.oddeleni
 GROUP BY o.nazev;
 
 -- Celkový počet podaných léků na každém oddělení
-
 SELECT o.nazev AS oddeleni, COUNT(d.id) AS celkovy_pocet_podanych_leku
 FROM oddeleni o
 JOIN hospitalizace h ON o.id = h.oddeleni
 JOIN davky d ON h.id = d.hospitalicace
 GROUP BY o.nazev;
 
--- Vsichni pacienti, kterim byl podan lek Aspirin
+-- Všetci pacienti, kterím byl podán lék Aspirin
 SELECT p.jmeno, p.datum_narozeni, p.pojistovna, p.zdravotni_karta
 FROM pacienty p
 JOIN davky d ON p.rodne_cislo = d.pacienty
 WHERE EXISTS(SELECT * FROM lek_davka ld JOIN leky l ON ld.lek = l.id WHERE l.nazev = 'Aspirin' AND ld.davka = d.id);
 
--- Vsetke lekare ktore sa venovali pacientovi Janko
+-- Všetci lekári, ktorí sa venovali pacientovi Janko.
 SELECT p.titul, p.jmeno, l.specializacia
 FROM lekare l
 JOIN personal p ON l.rodne_cislo = p.rodne_cislo
