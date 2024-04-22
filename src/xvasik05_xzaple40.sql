@@ -32,7 +32,7 @@ CREATE TABLE personal (
 
 -- Generalizace, lekar dedi atributy personalu a je pridana specializace.
 CREATE TABLE lekare (
-    rodne_cislo VARCHAR2(11) PRIMARY KEY REFERENCES personal(rodne_cislo) ON DELETE CASCADE, 
+    rodne_cislo VARCHAR2(11) PRIMARY KEY REFERENCES personal(rodne_cislo) ON DELETE CASCADE,
     specializacia NVARCHAR2(40) NOT NULL
 );
 
@@ -138,6 +138,15 @@ CREATE TABLE lek_davka (
 );
 -----------------------------------------
 
+-- Triggery
+
+-- TODO: vytvoření alespoň dvou netriviálních databázových triggerů vč. jejich předvedení
+
+-- TODO: vytvoření alespoň dvou netriviálních uložených procedur vč. jejich předvedení, ve kterých se musí (dohromady) vyskytovat alespoň jednou kurzor, ošetření výjimek a použití proměnné s datovým typem odkazujícím se na řádek či typ sloupce tabulky (table_name.column_name%TYPE nebo table_name%ROWTYPE)
+
+-- TODO: explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů, přičemž musí být uveden také příslušný dotaz, na který má index vliv, a na obhajobě vysvětlen způsob využití indexu v tomto dotazu (toto lze zkombinovat s EXPLAIN PLAN, vizte dále)
+-----------------------------------------
+
 -- Vlozeni dat
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
 VALUES ('000101/0001', 'Jan', 'MUDr.', TO_DATE('2000-01-01', 'YYYY/MM/DD'), '123456789');
@@ -215,7 +224,6 @@ JOIN hospitalizace h ON p.rodne_cislo = h.pacient
 JOIN oddeleni o ON h.oddeleni = o.id
 WHERE o.nazev = 'Chirurgia';
 
-
 -- Počet hospitalizací na každém oddělení
 SELECT o.nazev AS oddeleni, COUNT(h.id) AS pocet_hospitalizaci
 FROM oddeleni o
@@ -241,4 +249,11 @@ FROM lekare l
 JOIN personal p ON l.rodne_cislo = p.rodne_cislo
 WHERE l.rodne_cislo
 IN (SELECT h.lekar FROM hospitalizace h JOIN pacienty p ON h.pacient = p.rodne_cislo WHERE p.jmeno = 'Janko');
+-----------------------------------------
+
+-- TODO: alespoň jedno použití EXPLAIN PLAN pro výpis plánu provedení databazového dotazu se spojením alespoň dvou tabulek, agregační funkcí a klauzulí GROUP BY, přičemž na obhajobě musí být srozumitelně popsáno a vysvětleno, jak proběhne dle toho výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení, atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu), navržený způsob proveden (např. vytvořen index), zopakován EXPLAIN PLAN a jeho výsledek porovnán s výsledkem před provedením navrženého způsobu urychlení
+
+-- TODO: definici přístupových práv k databázovým objektům pro druhého člena týmu
+
+-- TODO: vytvoření alespoň jednoho materializovaného pohledu patřící druhému členu týmu a používající tabulky definované prvním členem týmu (nutno mít již definována přístupová práva), vč. SQL příkazů/dotazů ukazujících, jak materializovaný pohled funguje
 -----------------------------------------
