@@ -40,10 +40,11 @@ CREATE TABLE lekare
 
 CREATE TABLE oddeleni
 (
-    id       NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nazev    NVARCHAR2(40) NOT NULL,
-    kapacita NUMBER        NOT NULL,
-    typ      NVARCHAR2(20) NOT NULL CHECK ( REGEXP_LIKE(typ, '(urgentní)|(lůžkové)|(transfuzní)|(infekcní)') )
+    id          NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nazev       NVARCHAR2(40) NOT NULL,
+    kapacita    NUMBER        NOT NULL,
+    volne_mista NUMBER        NOT NULL,
+    typ         NVARCHAR2(20) NOT NULL CHECK ( REGEXP_LIKE(typ, '(urgentní)|(lůžkové)|(transfuzní)|(infekcní)') )
 );
 
 CREATE TABLE pacienty
@@ -70,6 +71,7 @@ CREATE TABLE hospitalizace
 (
     id                NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cas_hospitalizaci TIMESTAMP WITH LOCAL TIME ZONE NOT NULL,
+    cas_ukonceni      TIMESTAMP WITH LOCAL TIME ZONE,
     popis             NVARCHAR2(200),
     pacient           VARCHAR2(11)                   NOT NULL,
     lekar             VARCHAR2(11)                   NOT NULL,
@@ -152,7 +154,35 @@ CREATE TABLE lek_davka
 
 -- Triggery
 
--- TODO: vytvoření alespoň dvou netriviálních databázových triggerů vč. jejich předvedení
+-- Dekrementace volnych mist na oddeleni pri vytvoreni nove hospitalizace
+CREATE OR REPLACE TRIGGER decrement_volne_mista
+    AFTER INSERT ON hospitalizace
+    FOR EACH ROW
+DECLARE
+    n_volne_mista NUMBER;
+BEGIN
+    SELECT volne_mista INTO n_volne_mista FROM oddeleni WHERE id = :NEW.oddeleni;
+    IF :NEW.cas_ukonceni IS NULL AND n_volne_mista = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Na tomto oddeleni neni volne misto.');
+        RAISE_APPLICATION_ERROR(-20001, 'Na tomto oddeleni neni volne misto.');
+    ELSE
+        UPDATE oddeleni
+        SET volne_mista = volne_mista - 1
+        WHERE id = :NEW.oddeleni;
+    END IF;
+END;
+
+-- Inkrementace volnych mist na oddeleni pri ukonceni hospitalizace
+CREATE OR REPLACE TRIGGER increment_volne_mista
+    AFTER UPDATE ON hospitalizace
+    FOR EACH ROW
+BEGIN
+    IF :OLD.cas_ukonceni IS NULL AND :NEW.cas_ukonceni IS NOT NULL THEN
+        UPDATE oddeleni
+        SET volne_mista = volne_mista + 1
+        WHERE id = :OLD.oddeleni;
+    END IF;
+END;
 
 -- TODO: vytvoření alespoň dvou netriviálních uložených procedur vč. jejich předvedení, ve kterých se musí (dohromady) vyskytovat alespoň jednou kurzor, ošetření výjimek a použití proměnné s datovým typem odkazujícím se na řádek či typ sloupce tabulky (table_name.column_name%TYPE nebo table_name%ROWTYPE)
 
@@ -174,10 +204,10 @@ VALUES ('000101/0001', 'Chirurg');
 INSERT INTO lekare (rodne_cislo, specializacia)
 VALUES ('000102/0002', 'Všeobecný');
 
-INSERT INTO oddeleni (nazev, kapacita, typ)
-VALUES ('Chirurgia', 20, 'urgentní');
-INSERT INTO oddeleni (nazev, kapacita, typ)
-VALUES ('Všeobecné', 20, 'lůžkové');
+INSERT INTO oddeleni (nazev, kapacita, volne_mista, typ)
+VALUES ('Chirurgia', 1, 1, 'urgentní');
+INSERT INTO oddeleni (nazev, kapacita, volne_mista, typ)
+VALUES ('Všeobecné', 20, 20, 'lůžkové');
 
 INSERT INTO pacienty (rodne_cislo, jmeno, titul, kontakt, datum_narozeni, pojistovna, zdravotni_karta)
 VALUES ('000101/0001', 'Janko', 'Ing.', '123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 111, 123456789);
@@ -189,10 +219,10 @@ VALUES ('Aspirin', 'Acetylsalicylová kyselina', '100mg', 'Nemocní s žaludečn
 INSERT INTO leky (nazev, ucinna_latka, sila_leku, kontradikce)
 VALUES ('Paralen', 'Paracetamol', '500mg', 'Nemocní s poškozenou jaterní funkcí');
 
-INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
-VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 1);
-INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
-VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', '000102/0002', '000102/0002', 2);
+INSERT INTO hospitalizace (cas_hospitalizaci, cas_ukonceni, popis, pacient, lekar, oddeleni)
+VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-02', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 1);
+INSERT INTO hospitalizace (cas_hospitalizaci, cas_ukonceni, popis, pacient, lekar, oddeleni)
+VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-07', 'YYYY/MM/DD'), 'Popis', '000102/0002', '000102/0002', 2);
 
 INSERT INTO davky (cas_podani, mnozstvi, hospitalicace, pacienty)
 VALUES (TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 1, '000101/0001');
@@ -284,6 +314,19 @@ WHERE l.rodne_cislo
 
 -- Provádení triggerů
 
+-- Dekrementace volnych mist na oddeleni pri vytvoreni nove hospitalizace
+SELECT volne_mista FROM oddeleni WHERE id = 2; -- 19
+INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
+VALUES (TO_DATE('2001-01-01', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 2); -- 18
+SELECT volne_mista FROM oddeleni WHERE id = 2; -- 18
+
+-- INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
+-- VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 1); -- 0 volnych mist, error
+
+-- Inkrementace volnych mist na oddeleni pri ukonceni hospitalizace
+SELECT volne_mista FROM oddeleni WHERE id = 2; -- 18
+UPDATE hospitalizace SET cas_ukonceni = TO_DATE('2000-01-02', 'YYYY/MM/DD') WHERE id = 2;
+SELECT volne_mista FROM oddeleni WHERE id = 2; -- 19
 -----------------------------------------
 
 -- TODO: alespoň jedno použití EXPLAIN PLAN pro výpis plánu provedení databazového dotazu se spojením alespoň dvou tabulek, agregační funkcí a klauzulí GROUP BY, přičemž na obhajobě musí být srozumitelně popsáno a vysvětleno, jak proběhne dle toho výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení, atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu), navržený způsob proveden (např. vytvořen index), zopakován EXPLAIN PLAN a jeho výsledek porovnán s výsledkem před provedením navrženého způsobu urychlení
