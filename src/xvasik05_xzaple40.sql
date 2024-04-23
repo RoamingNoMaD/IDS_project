@@ -156,7 +156,8 @@ CREATE TABLE lek_davka
 
 -- Dekrementace volnych mist na oddeleni pri vytvoreni nove hospitalizace
 CREATE OR REPLACE TRIGGER decrement_volne_mista
-    AFTER INSERT ON hospitalizace
+    AFTER INSERT
+    ON hospitalizace
     FOR EACH ROW
 DECLARE
     n_volne_mista NUMBER;
@@ -174,7 +175,8 @@ END;
 
 -- Inkrementace volnych mist na oddeleni pri ukonceni hospitalizace
 CREATE OR REPLACE TRIGGER increment_volne_mista
-    AFTER UPDATE ON hospitalizace
+    AFTER UPDATE
+    ON hospitalizace
     FOR EACH ROW
 BEGIN
     IF :OLD.cas_ukonceni IS NULL AND :NEW.cas_ukonceni IS NOT NULL THEN
@@ -183,10 +185,63 @@ BEGIN
         WHERE id = :OLD.oddeleni;
     END IF;
 END;
+-----------------------------------------
 
--- TODO: vytvoření alespoň dvou netriviálních uložených procedur vč. jejich předvedení, ve kterých se musí (dohromady) vyskytovat alespoň jednou kurzor, ošetření výjimek a použití proměnné s datovým typem odkazujícím se na řádek či typ sloupce tabulky (table_name.column_name%TYPE nebo table_name%ROWTYPE)
+-- Procedury
 
--- TODO: explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů, přičemž musí být uveden také příslušný dotaz, na který má index vliv, a na obhajobě vysvětlen způsob využití indexu v tomto dotazu (toto lze zkombinovat s EXPLAIN PLAN, vizte dále)
+-- Výpočet podílu pirazených hospitalizaci pro lekare na oddelení
+CREATE OR REPLACE PROCEDURE podil_prace(oddeleni_id IN oddeleni.id%TYPE) IS
+    CURSOR c_lekar IS
+        SELECT po.rodne_cislo
+        FROM personal_oddeleni po
+        WHERE po.id_oddeleni = oddeleni_id
+          AND po.rodne_cislo IN (SELECT rodne_cislo FROM lekare);
+    celk_pocet   NUMBER := 0;
+    podil_lekare NUMBER;
+    procento     NUMBER;
+BEGIN
+    SELECT COUNT(id) INTO celk_pocet FROM hospitalizace WHERE oddeleni = oddeleni_id;
+    FOR l IN c_lekar
+        LOOP
+            SELECT COUNT(id)
+            INTO podil_lekare
+            FROM hospitalizace
+            WHERE oddeleni = oddeleni_id
+              AND lekar = l.rodne_cislo;
+            procento := ROUND(podil_lekare / celk_pocet * 100, 2);
+            DBMS_OUTPUT.PUT_LINE('Lekar ' || l.rodne_cislo || ' ma podil ' || procento || '% na oddeleni ' ||
+                                 oddeleni_id);
+        END LOOP;
+EXCEPTION
+    WHEN ZERO_DIVIDE THEN
+        DBMS_OUTPUT.PUT_LINE('Neni zadne hospitalizace na tomto oddeleni.');
+END;
+
+-- Prevod tel. cisel pacientu na format +420
+CREATE OR REPLACE PROCEDURE formatuj_kontakty IS
+    CURSOR c_kontakt IS
+        SELECT kontakt
+        FROM pacienty;
+    v_kontakt pacienty.kontakt%TYPE;
+BEGIN
+    FOR p IN c_kontakt
+        LOOP
+            IF REGEXP_LIKE(p.kontakt, '\+[0-9]{12}') THEN
+                CONTINUE;
+            ELSIF REGEXP_LIKE(p.kontakt, '[0-9]{10}') THEN
+                v_kontakt := '+42' || p.kontakt;
+                UPDATE pacienty
+                SET kontakt = v_kontakt
+                WHERE kontakt = p.kontakt;
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('Kontakt ' || p.kontakt || ' nelze formátovat.');
+            END IF;
+        END LOOP;
+END;
+
+-- TODO: explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů,
+-- přičemž musí být uveden také příslušný dotaz, na který má index vliv, a na obhajobě vysvětlen způsob využití indexu
+-- v tomto dotazu (toto lze zkombinovat s EXPLAIN PLAN, vizte dále)
 -----------------------------------------
 
 -- Vlozeni dat
@@ -210,9 +265,9 @@ INSERT INTO oddeleni (nazev, kapacita, volne_mista, typ)
 VALUES ('Všeobecné', 20, 20, 'lůžkové');
 
 INSERT INTO pacienty (rodne_cislo, jmeno, titul, kontakt, datum_narozeni, pojistovna, zdravotni_karta)
-VALUES ('000101/0001', 'Janko', 'Ing.', '123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 111, 123456789);
+VALUES ('100000/1000', 'Janko', 'Ing.', '0123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 111, 123456789);
 INSERT INTO pacienty (rodne_cislo, jmeno, titul, kontakt, datum_narozeni, pojistovna, zdravotni_karta)
-VALUES ('000102/0002', 'Janka', 'Ing.', '123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 201, 123456789);
+VALUES ('200000/2000', 'Janka', 'Ing.', '+420123456789', TO_DATE('2000-01-01', 'YYYY/MM/DD'), 201, 123456789);
 
 INSERT INTO leky (nazev, ucinna_latka, sila_leku, kontradikce)
 VALUES ('Aspirin', 'Acetylsalicylová kyselina', '100mg', 'Nemocní s žaludečními vředy');
@@ -220,16 +275,18 @@ INSERT INTO leky (nazev, ucinna_latka, sila_leku, kontradikce)
 VALUES ('Paralen', 'Paracetamol', '500mg', 'Nemocní s poškozenou jaterní funkcí');
 
 INSERT INTO hospitalizace (cas_hospitalizaci, cas_ukonceni, popis, pacient, lekar, oddeleni)
-VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-02', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 1);
+VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-02', 'YYYY/MM/DD'), 'Popis', '100000/1000', '000101/0001',
+        1);
 INSERT INTO hospitalizace (cas_hospitalizaci, cas_ukonceni, popis, pacient, lekar, oddeleni)
-VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-07', 'YYYY/MM/DD'), 'Popis', '000102/0002', '000102/0002', 2);
+VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), TO_DATE('2000-01-07', 'YYYY/MM/DD'), 'Popis', '200000/2000', '000102/0002',
+        2);
 
 INSERT INTO davky (cas_podani, mnozstvi, hospitalicace, pacienty)
-VALUES (TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 1, '000101/0001');
+VALUES (TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 100, 1, '100000/1000');
 INSERT INTO davky (cas_podani, mnozstvi, hospitalicace, pacienty)
-VALUES (TO_TIMESTAMP('2000-01-01 08:05:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 2, '000102/0002');
+VALUES (TO_TIMESTAMP('2000-01-01 08:05:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 50, 2, '200000/2000');
 INSERT INTO davky (cas_podani, mnozstvi, hospitalicace, pacienty)
-VALUES (TO_TIMESTAMP('2000-01-02 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 1, 1, '000102/0002');
+VALUES (TO_TIMESTAMP('2000-01-02 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 200, 1, '100000/1000');
 
 INSERT INTO vysetreni (cas_vysetreni, popis, vysledek, oddeleni, hospitalicace, lekar)
 VALUES (TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 'Popis', 'Výsledek', 1, 1, '000101/0001');
@@ -237,9 +294,15 @@ INSERT INTO vysetreni (cas_vysetreni, popis, vysledek, oddeleni, hospitalicace, 
 VALUES (TO_TIMESTAMP('2000-01-01 08:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF'), 'Popis', 'Výsledek', 2, 2, '000102/0002');
 
 INSERT INTO personal_oddeleni (telefon, uvazek, rodne_cislo, id_oddeleni)
-VALUES ('123456789', 'Plný', '000101/0001', 1);
+VALUES ('0123456789', 'Zkrácený', '000101/0001', 1);
 INSERT INTO personal_oddeleni (telefon, uvazek, rodne_cislo, id_oddeleni)
-VALUES ('123456789', 'Zkrácený', '000102/0002', 2);
+VALUES ('0123456789', 'Plný', '000102/0002', 2);
+INSERT INTO personal_oddeleni (telefon, uvazek, rodne_cislo, id_oddeleni)
+VALUES ('0123456789', 'Zkrácený', '000103/0003', 1);
+INSERT INTO personal_oddeleni (telefon, uvazek, rodne_cislo, id_oddeleni)
+VALUES ('0123456789', 'Plný', '000104/0004', 2);
+INSERT INTO personal_oddeleni (telefon, uvazek, rodne_cislo, id_oddeleni)
+VALUES ('0123456789', 'Zkrácený', '000101/0001', 2);
 
 INSERT INTO lekar_leky (lekar, lek)
 VALUES ('000101/0001', 1);
@@ -315,18 +378,50 @@ WHERE l.rodne_cislo
 -- Provádení triggerů
 
 -- Dekrementace volnych mist na oddeleni pri vytvoreni nove hospitalizace
-SELECT volne_mista FROM oddeleni WHERE id = 2; -- 19
+SELECT volne_mista
+FROM oddeleni
+WHERE id = 2; -- 19
 INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
-VALUES (TO_DATE('2001-01-01', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 2); -- 18
-SELECT volne_mista FROM oddeleni WHERE id = 2; -- 18
+VALUES (TO_DATE('2001-01-01', 'YYYY/MM/DD'), 'Popis', '100000/1000', '000102/0002', 2);
+SELECT volne_mista
+FROM oddeleni
+WHERE id = 2; -- 18
 
 -- INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
--- VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', '000101/0001', '000101/0001', 1); -- 0 volnych mist, error
+-- VALUES (TO_DATE('2000-01-01', 'YYYY/MM/DD'), 'Popis', '100000/1000', '000101/0001', 1); -- 0 volnych mist, error
 
 -- Inkrementace volnych mist na oddeleni pri ukonceni hospitalizace
-SELECT volne_mista FROM oddeleni WHERE id = 2; -- 18
-UPDATE hospitalizace SET cas_ukonceni = TO_DATE('2000-01-02', 'YYYY/MM/DD') WHERE id = 2;
-SELECT volne_mista FROM oddeleni WHERE id = 2; -- 19
+SELECT volne_mista
+FROM oddeleni
+WHERE id = 2; -- 18
+UPDATE hospitalizace
+SET cas_ukonceni = TO_DATE('2000-01-10', 'YYYY/MM/DD')
+WHERE id = 3;
+SELECT volne_mista
+FROM oddeleni
+WHERE id = 2; -- 19
+-----------------------------------------
+
+-- Provádění uložených procedur
+
+BEGIN
+    podil_prace(2); -- podil 100% - 0% na oddeleni 2
+
+    INSERT INTO hospitalizace (cas_hospitalizaci, popis, pacient, lekar, oddeleni)
+    VALUES (TO_DATE('2001-01-01', 'YYYY/MM/DD'), 'Popis', '100000/1000', '000101/0001', 2);
+
+    podil_prace(2); -- podil 66.67% - 33.34% na oddeleni 2
+END;
+
+DECLARE
+    v_kontakt pacienty.kontakt%TYPE;
+BEGIN
+    SELECT kontakt INTO v_kontakt FROM pacienty WHERE rodne_cislo = '100000/1000';
+    DBMS_OUTPUT.PUT_LINE(v_kontakt); -- 0123456789
+    formatuj_kontakty;
+    SELECT kontakt INTO v_kontakt FROM pacienty WHERE rodne_cislo = '100000/1000';
+    DBMS_OUTPUT.PUT_LINE(v_kontakt); -- +420123456789
+END;
 -----------------------------------------
 
 -- TODO: alespoň jedno použití EXPLAIN PLAN pro výpis plánu provedení databazového dotazu se spojením alespoň dvou tabulek, agregační funkcí a klauzulí GROUP BY, přičemž na obhajobě musí být srozumitelně popsáno a vysvětleno, jak proběhne dle toho výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení, atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu), navržený způsob proveden (např. vytvořen index), zopakován EXPLAIN PLAN a jeho výsledek porovnán s výsledkem před provedením navrženého způsobu urychlení
