@@ -257,6 +257,7 @@ GRANT ALL ON lek_davka TO xvasik05;
 
 GRANT EXECUTE ON podil_prace TO xvasik05;
 GRANT EXECUTE ON formatuj_kontakty TO xvasik05;
+GRANT SELECT ON hospitalizace_pacienta TO xvasik05;
 
 -- Vlozeni dat
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
@@ -437,8 +438,18 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(v_kontakt); -- +420123456789
 END;
 -----------------------------------------
+-- Materializovaný pohled
+DROP MATERIALIZED VIEW hospitalizace_pacienta
 
+-- Tento dotaz spouští xvasik05
+CREATE MATERIALIZED VIEW hospitalizace_pacienta
+REFRESH COMPLETE ON DEMAND
+AS
+SELECT p.rodne_cislo, p.jmeno, h.cas_hospitalizaci, h.cas_ukonceni, h.popis
+FROM xzaple40.pacienty p
+JOIN xzaple40.hospitalizace h ON p.rodne_cislo = h.pacient;
 
+-----------------------------------------
 
 -- Explain plan demonstrace
 
@@ -515,7 +526,4 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 -- Note
 -- -----
 --    - this is an adaptive plan
-
-
--- TODO: vytvoření alespoň jednoho materializovaného pohledu patřící druhému členu týmu a používající tabulky definované prvním členem týmu (nutno mít již definována přístupová práva), vč. SQL příkazů/dotazů ukazujících, jak materializovaný pohled funguje
 -----------------------------------------
