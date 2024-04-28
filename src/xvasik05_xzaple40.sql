@@ -462,34 +462,8 @@ GROUP BY o.nazev;
 
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
--- PLAN_TABLE_OUTPUT
--- Plan hash value: 2771992237
- 
--- ------------------------------------------------------------------------------------------------
--- | Id  | Operation                     | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
--- ------------------------------------------------------------------------------------------------
--- |   0 | SELECT STATEMENT              |                |     2 |    50 |     6  (17)| 00:00:01 |
--- |   1 |  HASH GROUP BY                |                |     2 |    50 |     6  (17)| 00:00:01 |
--- |   2 |   NESTED LOOPS                |                |     2 |    50 |     5   (0)| 00:00:01 |
--- |   3 |    NESTED LOOPS               |                |     2 |    50 |     5   (0)| 00:00:01 |
--- |   4 |     TABLE ACCESS FULL         | HOSPITALIZACE  |     2 |     6 |     3   (0)| 00:00:01 |
--- |*  5 |     INDEX UNIQUE SCAN         | SYS_C001341314 |     1 |       |     0   (0)| 00:00:01 |
--- |   6 |    TABLE ACCESS BY INDEX ROWID| ODDELENI       |     1 |    22 |     1   (0)| 00:00:01 |
--- ------------------------------------------------------------------------------------------------
- 
--- Predicate Information (identified by operation id):
--- ---------------------------------------------------
- 
---    5 - access("O"."ID"="H"."ODDELENI")
- 
--- Note
--- -----
---    - this is an adaptive plan
-
-
-
--- Vytvoreni indexu tabulky hospitalicace pro sloupec oddeleni. Prohledavani v hospitalizacich bude provadeno pomoci daneho indexu misto prohledavani cele tabulky. 
---Tim padem se urychli i agregacni funkce COUNT() a to vede ke zrychlení operace GROUP BY.
+-- Vytvořeni indexu tabulky hospitalicace pro sloupec oddělení. Prohledavaní v hospitalizacich bude prováděno pomocí daneho indexu namísto prohledavaní cele tabulky. 
+-- Tim padem se urychlí i agregačni funkce COUNT() a to vede ke zrychlení operace GROUP BY.
 CREATE INDEX index_hosp_odd ON hospitalizace(oddeleni);
 
 DROP INDEX index_hosp_odd
@@ -503,27 +477,4 @@ GROUP BY o.nazev;
 
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
--- PLAN_TABLE_OUTPUT
--- Plan hash value: 1961791898
- 
--- ------------------------------------------------------------------------------------------------
--- | Id  | Operation                     | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
--- ------------------------------------------------------------------------------------------------
--- |   0 | SELECT STATEMENT              |                |     2 |    50 |     4  (25)| 00:00:01 |
--- |   1 |  HASH GROUP BY                |                |     2 |    50 |     4  (25)| 00:00:01 |
--- |   2 |   NESTED LOOPS                |                |     2 |    50 |     3   (0)| 00:00:01 |
--- |   3 |    NESTED LOOPS               |                |     2 |    50 |     3   (0)| 00:00:01 |
--- |   4 |     INDEX FULL SCAN           | INDEX_HOSP_ODD |     2 |     6 |     1   (0)| 00:00:01 |
--- |*  5 |     INDEX UNIQUE SCAN         | SYS_C001341314 |     1 |       |     0   (0)| 00:00:01 |
--- |   6 |    TABLE ACCESS BY INDEX ROWID| ODDELENI       |     1 |    22 |     1   (0)| 00:00:01 |
--- ------------------------------------------------------------------------------------------------
- 
--- Predicate Information (identified by operation id):
--- ---------------------------------------------------
- 
---    5 - access("O"."ID"="H"."ODDELENI")
- 
--- Note
--- -----
---    - this is an adaptive plan
 -----------------------------------------
