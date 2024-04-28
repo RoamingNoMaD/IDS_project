@@ -239,10 +239,24 @@ BEGIN
         END LOOP;
 END;
 
--- TODO: explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů,
--- přičemž musí být uveden také příslušný dotaz, na který má index vliv, a na obhajobě vysvětlen způsob využití indexu
--- v tomto dotazu (toto lze zkombinovat s EXPLAIN PLAN, vizte dále)
 -----------------------------------------
+
+-- Přístupová práva
+GRANT ALL ON personal TO xvasik05;
+GRANT ALL ON lekare TO xvasik05;
+GRANT ALL ON oddeleni TO xvasik05;
+GRANT ALL ON pacienty TO xvasik05;
+GRANT ALL ON leky TO xvasik05;
+GRANT ALL ON hospitalizace TO xvasik05;
+GRANT ALL ON davky TO xvasik05;
+GRANT ALL ON vysetreni TO xvasik05;
+GRANT ALL ON personal_oddeleni TO xvasik05;
+GRANT ALL ON lekar_leky TO xvasik05;
+GRANT ALL ON sestra_davka TO xvasik05;
+GRANT ALL ON lek_davka TO xvasik05;
+
+GRANT EXECUTE ON podil_prace TO xvasik05;
+GRANT EXECUTE ON formatuj_kontakty TO xvasik05;
 
 -- Vlozeni dat
 INSERT INTO personal (rodne_cislo, jmeno, titul, datum_nastupu, kontakt)
@@ -424,9 +438,84 @@ BEGIN
 END;
 -----------------------------------------
 
--- TODO: alespoň jedno použití EXPLAIN PLAN pro výpis plánu provedení databazového dotazu se spojením alespoň dvou tabulek, agregační funkcí a klauzulí GROUP BY, přičemž na obhajobě musí být srozumitelně popsáno a vysvětleno, jak proběhne dle toho výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení, atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu), navržený způsob proveden (např. vytvořen index), zopakován EXPLAIN PLAN a jeho výsledek porovnán s výsledkem před provedením navrženého způsobu urychlení
 
--- TODO: definici přístupových práv k databázovým objektům pro druhého člena týmu
+
+-- Explain plan demonstrace
+
+-- Před optimalizací
+EXPLAIN PLAN FOR
+SELECT o.nazev AS oddeleni, COUNT(h.id) AS pocet_hospitalizaci
+FROM oddeleni o
+JOIN hospitalizace h ON o.id = h.oddeleni
+GROUP BY o.nazev;
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+-- PLAN_TABLE_OUTPUT
+-- Plan hash value: 2771992237
+ 
+-- ------------------------------------------------------------------------------------------------
+-- | Id  | Operation                     | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+-- ------------------------------------------------------------------------------------------------
+-- |   0 | SELECT STATEMENT              |                |     2 |    50 |     6  (17)| 00:00:01 |
+-- |   1 |  HASH GROUP BY                |                |     2 |    50 |     6  (17)| 00:00:01 |
+-- |   2 |   NESTED LOOPS                |                |     2 |    50 |     5   (0)| 00:00:01 |
+-- |   3 |    NESTED LOOPS               |                |     2 |    50 |     5   (0)| 00:00:01 |
+-- |   4 |     TABLE ACCESS FULL         | HOSPITALIZACE  |     2 |     6 |     3   (0)| 00:00:01 |
+-- |*  5 |     INDEX UNIQUE SCAN         | SYS_C001341314 |     1 |       |     0   (0)| 00:00:01 |
+-- |   6 |    TABLE ACCESS BY INDEX ROWID| ODDELENI       |     1 |    22 |     1   (0)| 00:00:01 |
+-- ------------------------------------------------------------------------------------------------
+ 
+-- Predicate Information (identified by operation id):
+-- ---------------------------------------------------
+ 
+--    5 - access("O"."ID"="H"."ODDELENI")
+ 
+-- Note
+-- -----
+--    - this is an adaptive plan
+
+
+
+-- Vytvoreni indexu tabulky hospitalicace pro sloupec oddeleni. Prohledavani v hospitalizacich bude provadeno pomoci daneho indexu misto prohledavani cele tabulky. 
+--Tim padem se urychli i agregacni funkce COUNT() a to vede ke zrychlení operace GROUP BY.
+CREATE INDEX index_hosp_odd ON hospitalizace(oddeleni);
+
+DROP INDEX index_hosp_odd
+
+-- Po optimalizaci (sníží se cost)
+EXPLAIN PLAN FOR
+SELECT o.nazev AS oddeleni, COUNT(h.id) AS pocet_hospitalizaci
+FROM oddeleni o
+JOIN hospitalizace h ON o.id = h.oddeleni
+GROUP BY o.nazev;
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+-- PLAN_TABLE_OUTPUT
+-- Plan hash value: 1961791898
+ 
+-- ------------------------------------------------------------------------------------------------
+-- | Id  | Operation                     | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+-- ------------------------------------------------------------------------------------------------
+-- |   0 | SELECT STATEMENT              |                |     2 |    50 |     4  (25)| 00:00:01 |
+-- |   1 |  HASH GROUP BY                |                |     2 |    50 |     4  (25)| 00:00:01 |
+-- |   2 |   NESTED LOOPS                |                |     2 |    50 |     3   (0)| 00:00:01 |
+-- |   3 |    NESTED LOOPS               |                |     2 |    50 |     3   (0)| 00:00:01 |
+-- |   4 |     INDEX FULL SCAN           | INDEX_HOSP_ODD |     2 |     6 |     1   (0)| 00:00:01 |
+-- |*  5 |     INDEX UNIQUE SCAN         | SYS_C001341314 |     1 |       |     0   (0)| 00:00:01 |
+-- |   6 |    TABLE ACCESS BY INDEX ROWID| ODDELENI       |     1 |    22 |     1   (0)| 00:00:01 |
+-- ------------------------------------------------------------------------------------------------
+ 
+-- Predicate Information (identified by operation id):
+-- ---------------------------------------------------
+ 
+--    5 - access("O"."ID"="H"."ODDELENI")
+ 
+-- Note
+-- -----
+--    - this is an adaptive plan
+
 
 -- TODO: vytvoření alespoň jednoho materializovaného pohledu patřící druhému členu týmu a používající tabulky definované prvním členem týmu (nutno mít již definována přístupová práva), vč. SQL příkazů/dotazů ukazujících, jak materializovaný pohled funguje
 -----------------------------------------
