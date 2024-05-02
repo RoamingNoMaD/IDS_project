@@ -439,7 +439,7 @@ BEGIN
 END;
 -----------------------------------------
 -- Materializovaný pohled
-DROP MATERIALIZED VIEW hospitalizace_pacienta
+DROP MATERIALIZED VIEW hospitalizace_pacienta;
 
 -- Tento dotaz spouští xvasik05
 CREATE MATERIALIZED VIEW hospitalizace_pacienta
@@ -466,7 +466,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 -- Tim padem se urychlí i agregačni funkce COUNT() a to vede ke zrychlení operace GROUP BY.
 CREATE INDEX index_hosp_odd ON hospitalizace(oddeleni);
 
-DROP INDEX index_hosp_odd
+-- DROP INDEX index_hosp_odd;
 
 -- Po optimalizaci (sníží se cost)
 EXPLAIN PLAN FOR
